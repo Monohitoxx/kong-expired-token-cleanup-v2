@@ -73,8 +73,8 @@ def deleteExpiredIDs(host, keyspace, user, password):
     exec_time = current_time.strftime("%Y-%m-%d %H:%M:%S %Z")
 
     # Count tokens before deletion
-    count_before = session.execute("SELECT COUNT(*) FROM oauth2_tokens").one()[0]
-    print(f"Number of tokens before deletion: {count_before}")
+    #count_before = session.execute("SELECT COUNT(*) FROM oauth2_tokens").one()[0]
+    #print(f"Number of tokens before deletion: {count_before}")
     
     rows = session.execute("SELECT id, credential_id, expires_in, created_at FROM oauth2_tokens ALLOW FILTERING")
     rowsdeleted = 0
