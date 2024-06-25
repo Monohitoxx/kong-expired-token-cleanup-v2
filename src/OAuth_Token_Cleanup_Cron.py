@@ -79,7 +79,7 @@ def deleteExpiredIDs(host, keyspace, user, password):
     consumer_tokens = {}
     for token_row in rows:
         # Parse created_at field to datetime object
-        created_at = datetime.datetime.strptime(token_row.created_at, "%Y-%m-%d %H:%M:%S.%f%z")
+        created_at = token_row.created_at
         
         # Calculate expiration time
         expiration_time = created_at + datetime.timedelta(seconds=token_row.expires_in)
