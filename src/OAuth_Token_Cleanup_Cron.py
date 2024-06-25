@@ -105,9 +105,9 @@ def deleteExpiredIDs(host, keyspace, user, password):
     consumer_abuse_table = "<hr/><span class=\"black\">Consumer Token Creation Abuse (If any): </span><hr/>"
     for key, value in consumer_tokens.items():
         if value >= 100:
-            offending_creds = session.execute("SELECT consumer_id FROM oauth2_credentials WHERE id = %s ALLOW FILTERING", [uuid.UUID(key)])
+            offending_creds = session.execute("SELECT consumer_id FROM oauth2_credentials where id = " + str(key).replace('(','').replace(')','') +  " ALLOW FILTERING")
             offending_consumer_id = str(offending_creds[0].consumer_id)
-            offending_consumer = session.execute("SELECT username FROM consumers WHERE id = %s ALLOW FILTERING", [uuid.UUID(offending_consumer_id)])
+            offending_consumer = session.execute("SELECT username FROM consumers where id = " + offending_consumer_id + " ALLOW FILTERING")
             offending_consumer_username = str(offending_consumer[0].username)
             print(f"Cassandra Keyspace: {keyspace}, Consumer ID: {offending_consumer_id}, Consumer Name: {offending_consumer_username}, Tokens Created: {value}")
             consumer_abuse_table += "<br/><span class=\"black\">Cassandra Keyspace: </span> " + str(keyspace) + \
