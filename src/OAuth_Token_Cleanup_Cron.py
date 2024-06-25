@@ -50,11 +50,11 @@ else:
     ssl_opts = {}
 
 
-def sendEmailAlert(BODY, dbhost, subject):
+def sendEmailAlert(BODY, dbhost, subject, exec_time):
     if args.email and args.smtpserver:
         msg = MIMEText(BODY, 'html')
         msg['Subject'] = dbhost + " " + subject
-        sender = dbhost + " OAuth Token Cleanup Script"
+        sender = f"{dbhost} OAuth Token Cleanup Script executed at {exec_time}"
         recipients = [args.email]
         msg['From'] = sender
         msg['To'] = ", ".join(recipients)
