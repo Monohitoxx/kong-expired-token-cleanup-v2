@@ -79,7 +79,7 @@ def deleteExpiredIDs(host, keyspace, user, password):
             consumer_tokens[token_row.credential_id] = 1
         print(f"Deleting token with ID: {token_row.id} and Credential ID: {token_row.credential_id}")
         rowsdeleted += 1
-        session.execute("DELETE FROM oauth2_tokens WHERE id = %s", [str(token_row.id)])
+        session.execute("DELETE from oauth2_tokens where id=" + str(token_row.id) + "")
 
     consumer_abuse_table = "<hr/><span class=\"black\">Consumer Token Creation Abuse (If any): </span><hr/>"
     for key, value in consumer_tokens.items():
