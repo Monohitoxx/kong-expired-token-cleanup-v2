@@ -31,6 +31,7 @@ parser.add_argument('keyspace', type=str, help='keyspace for the token deletes')
 parser.add_argument('username', type=str, help='cassandra username')
 parser.add_argument('password', type=str, help='cassandra password')
 parser.add_argument('--email', type=str, help='email address to notify of token cleanup', default=None)
+parser.add_argument('--sender', type=str, help='email address to notify of token cleanup', default=None)
 parser.add_argument('--smtpserver', type=str, help='SMTP relay server to use to send notification email', default=None)
 parser.add_argument('--ssl', action='store_true', default=False, help='(Default false) use SSL for connections to cassandra')
 parser.add_argument('--ca', type=str, help='If using SSL, provide a path to the truststore as a PEM')
@@ -53,15 +54,14 @@ else:
 def sendEmailAlert(BODY, dbhost, subject, exec_time):
     if args.email and args.smtpserver:
         msg = MIMEText(BODY, 'html')
-        msg['Subject'] = dbhost + " " + subject
-        sender = f"{dbhost} OAuth Token Cleanup Script executed at {exec_time}"
+        msg['Subject'] = f"{dbhost} {subject} executed at {exec_time}"
+        sender = args.sender if args.sender else f"{dbhost} OAuth Token Cleanup Script"
         recipients = [args.email]
         msg['From'] = sender
         msg['To'] = ", ".join(recipients)
         server = smtplib.SMTP(args.smtpserver)
         server.sendmail(sender, recipients, msg.as_string())
         server.quit()
-
 
 def deleteExpiredIDs(host, keyspace, user, password):
     auth_provider = PlainTextAuthProvider(username=user, password=password)
