@@ -78,8 +78,11 @@ def deleteExpiredIDs(host, keyspace, user, password):
     rowsdeleted = 0
     consumer_tokens = {}
     for token_row in rows:
-        # Parse created_at field to datetime object
-        created_at = token_row.created_at
+        # Ensure created_at is a timezone-aware datetime object
+        if token_row.created_at.tzinfo is None:
+            created_at = token_row.created_at.replace(tzinfo=pytz.utc)
+        else:
+            created_at = token_row.created_at
         
         # Calculate expiration time
         expiration_time = created_at + datetime.timedelta(seconds=token_row.expires_in)
