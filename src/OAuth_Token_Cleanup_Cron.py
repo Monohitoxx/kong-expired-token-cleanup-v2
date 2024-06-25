@@ -10,6 +10,7 @@ import socket
 from email.mime.text import MIMEText
 import sys
 import os.path
+import pytz
 
 # Loads hostname of server to give detail in notification email
 casshost = socket.gethostname()
@@ -62,31 +63,48 @@ def sendEmailAlert(BODY, dbhost, subject):
 
 
 def deleteExpiredIDs(host, keyspace, user, password):
-    # subtracts 7200 because we want to only delete those tokens more than two hours old. Subtracts 21600 (6 hours) because cassandra compensates for the UTC/CTC time difference
-    two_hours_ago = datetime.datetime.utcfromtimestamp(int(time.time()) - 7200 - 21600)
     auth_provider = PlainTextAuthProvider(username=user, password=password)
     cluster = Cluster([host], ssl_options=ssl_opts, auth_provider=auth_provider, port=9042)
     session = cluster.connect(keyspace)
-    str_two_hours_ago = str(two_hours_ago)
-    rows = session.execute("SELECT id, credential_id FROM oauth2_tokens WHERE created_at <= %s ALLOW FILTERING", [str_two_hours_ago])
+    
+    # Get current time in UTC
+    current_time = datetime.datetime.now(pytz.utc)
+
+    # Count tokens before deletion
+    count_before = session.execute("SELECT COUNT(*) FROM oauth2_tokens").one()[0]
+    print(f"Number of tokens before deletion: {count_before}")
+    
+    rows = session.execute("SELECT id, credential_id, expires_in, created_at FROM oauth2_tokens ALLOW FILTERING")
     rowsdeleted = 0
     consumer_tokens = {}
     for token_row in rows:
-        # Used to determine if a consumer is abusing token service
-        if token_row.credential_id in consumer_tokens:
-            consumer_tokens[token_row.credential_id] += 1
-        else:
-            consumer_tokens[token_row.credential_id] = 1
-        print(f"Deleting token with ID: {token_row.id} and Credential ID: {token_row.credential_id}")
-        rowsdeleted += 1
-        session.execute("DELETE from oauth2_tokens where id=" + str(token_row.id) + "")
+        # Parse created_at field to datetime object
+        created_at = datetime.datetime.strptime(token_row.created_at, "%Y-%m-%d %H:%M:%S.%f%z")
+        
+        # Calculate expiration time
+        expiration_time = created_at + datetime.timedelta(seconds=token_row.expires_in)
+        
+        if current_time > expiration_time:
+            # Used to determine if a consumer is abusing token service
+            if token_row.credential_id in consumer_tokens:
+                consumer_tokens[token_row.credential_id] += 1
+            else:
+                consumer_tokens[token_row.credential_id] = 1
+            
+            print(f"Deleting token with ID: {token_row.id}, Credential ID: {token_row.credential_id}, Expires In: {token_row.expires_in}, Created At: {created_at}, Expired At: {expiration_time}")
+            rowsdeleted += 1
+            session.execute("DELETE from oauth2_tokens where id=" + str(token_row.id) + "")
+
+    # Count tokens after deletion
+    count_after = session.execute("SELECT COUNT(*) FROM oauth2_tokens").one()[0]
+    print(f"Number of tokens after deletion: {count_after}")
 
     consumer_abuse_table = "<hr/><span class=\"black\">Consumer Token Creation Abuse (If any): </span><hr/>"
     for key, value in consumer_tokens.items():
         if value >= 100:
-            offending_creds = session.execute("SELECT consumer_id FROM oauth2_credentials WHERE id = %s ALLOW FILTERING", [str(key)])
+            offending_creds = session.execute("SELECT consumer_id FROM oauth2_credentials WHERE id = %s ALLOW FILTERING", [uuid.UUID(key)])
             offending_consumer_id = str(offending_creds[0].consumer_id)
-            offending_consumer = session.execute("SELECT username FROM consumers WHERE id = %s ALLOW FILTERING", [offending_consumer_id])
+            offending_consumer = session.execute("SELECT username FROM consumers WHERE id = %s ALLOW FILTERING", [uuid.UUID(offending_consumer_id)])
             offending_consumer_username = str(offending_consumer[0].username)
             print(f"Cassandra Keyspace: {keyspace}, Consumer ID: {offending_consumer_id}, Consumer Name: {offending_consumer_username}, Tokens Created: {value}")
             consumer_abuse_table += "<br/><span class=\"black\">Cassandra Keyspace: </span> " + str(keyspace) + \
