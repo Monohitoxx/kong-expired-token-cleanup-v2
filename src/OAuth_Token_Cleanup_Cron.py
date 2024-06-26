@@ -121,7 +121,7 @@ def deleteExpiredIDs(host, keyspace, user, password):
                                     "<br/><span class=\"black\">Consumer Name: </span> " + offending_consumer_username + \
                                     "<br/><span class=\"black\">Tokens Created: </span> " + str(value) + "<hr/>"
 
-    sendEmailAlert("<html> <head> <style> body{ font-family: FrutigerLTStd-Light, Arial, sans-serif;} h1, h2, h3, h4 { color:#e87722; font-weight: bold; text-rendering: optimizeLegibility; margin: 0 0 24px 0; } .black{ color:#333333; }.light{ color:#8c8c8c; font-size: 10px; } </style> </head> <body> <br/> <h1><span class=\"black\">Server:</span> " + casshost + "<br/><span class=\"black\">Cassandra Keyspace: </span> " + str(keyspace) + "<br/><span class=\"black\">OAuth_Tokens Rows Deleted: </span> " + str(rowsdeleted) + "</h1> " + str(consumer_abuse_table) + "</body> </html>", casshost, "OAuth Token Cleanup", exec_time)
+    sendEmailAlert("<html> <head> <style> body{ font-family: FrutigerLTStd-Light, Arial, sans-serif;} h1, h2, h3, h4 { color:#e87722; font-weight: bold; text-rendering: optimizeLegibility; margin: 0 0 24px 0; } .black{ color:#333333; }.light{ color:#8c8c8c; font-size: 10px; } </style> </head> <body> <br/> <h1><span class=\"black\">Server:</span> " + casshost + "<br/><span class=\"black\">Cassandra Keyspace: </span> " + str(keyspace) + "<br/><span class=\"black\">OAuth_Tokens Rows Deleted: </span> " + str(rowsdeleted) + "</h1> " + str(consumer_abuse_table) + "</body> </html>", casshost, args.email_title, exec_time)
     cluster.shutdown()
 
 
