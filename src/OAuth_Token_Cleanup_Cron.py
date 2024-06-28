@@ -105,8 +105,8 @@ def deleteExpiredIDs(host, keyspace, user, password):
             session.execute("DELETE from oauth2_tokens where id=" + str(token_row.id) + "")
 
     # Count tokens after deletion
-    count_after = session.execute("SELECT COUNT(*) FROM oauth2_tokens").one()[0]
-    print(f"Number of tokens after deletion: {count_after}")
+    #count_after = session.execute("SELECT COUNT(*) FROM oauth2_tokens").one()[0]
+    #print(f"Number of tokens after deletion: {count_after}")
 
     consumer_abuse_table = "<hr/><span class=\"black\">Consumer Token Creation Abuse (If any): </span><hr/>"
     for key, value in consumer_tokens.items():
